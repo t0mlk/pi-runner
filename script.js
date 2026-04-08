@@ -1,4 +1,4 @@
-// KORRIGIERTE FIREBASE KONFIGURATION
+// Firebase Konfiguration - EXAKT nach deinem neuen Foto übertragen
 const firebaseConfig = {
     apiKey: "AIzaSyA0Et1D50vP8KnaRC1nyNN5dN0OGqpqq7c",
     authDomain: "lpmzt-5c267.firebaseapp.com",
@@ -10,34 +10,49 @@ const firebaseConfig = {
     measurementId: "G-M2QSLJ32X1"
 };
 
-// Start
+// Initialisierung (Compatibility Mode für einfache HTML Seiten)
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
+// --- LOGIN FUNKTION ---
 function login() {
     const name = document.getElementById('username').value;
     const pass = document.getElementById('password').value;
     const errorDisplay = document.getElementById('auth-error');
 
     if (!name || !pass) {
-        errorDisplay.innerText = "Name und Passwort fehlen!";
+        errorDisplay.innerText = "Bitte Name und Passwort eingeben!";
         return;
     }
 
-    // ACHTUNG: Nutze hier die gleiche Endung wie in Unity!
+    errorDisplay.innerText = "Verbindung zum Hangar...";
+
+    // VORSICHT: Wenn du in Unity z.B. "@game.de" nutzt, ändere das hier!
     const email = name.trim().toLowerCase() + "@test.de"; 
 
     auth.signInWithEmailAndPassword(email, pass)
+        .then(() => {
+            console.log("Login erfolgreich!");
+            errorDisplay.innerText = "";
+        })
         .catch((error) => {
-            console.error("Login Fehler:", error.code);
-            errorDisplay.innerText = "Login fehlgeschlagen. Daten prüfen!";
+            console.error("Firebase Fehler:", error.code);
+            if (error.code === "auth/user-not-found") {
+                errorDisplay.innerText = "Pilot unbekannt! Check die Email-Endung im Script (@test.de).";
+            } else if (error.code === "auth/wrong-password") {
+                errorDisplay.innerText = "Falsches Passwort!";
+            } else {
+                errorDisplay.innerText = "Fehler: " + error.message;
+            }
         });
 }
 
-function logout() { auth.signOut(); }
+function logout() {
+    auth.signOut();
+}
 
-// Überwachung Login-Status
+// --- STATUS-ÜBERWACHUNG ---
 auth.onAuthStateChanged(user => {
     const loginUI = document.getElementById('auth-section');
     const leaderUI = document.getElementById('leaderboard-section');
@@ -53,6 +68,7 @@ auth.onAuthStateChanged(user => {
     }
 });
 
+// --- DATEN LADEN ---
 function loadUserData(uid) {
     db.ref('users/' + uid).once('value').then(snap => {
         const data = snap.val();
@@ -72,7 +88,6 @@ function loadLeaderboard() {
             let p = child.val();
             if (p.username) players.push(p);
         });
-
         players.reverse().forEach((p, i) => {
             let row = `<tr>
                 <td class="${i === 0 ? 'gold' : ''}">${i + 1}</td>
