@@ -3,38 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pi-Runner | Dashboard</title>
+    <title>PI-RUNNER | Pilot Dashboard</title>
+    
     <link rel="stylesheet" href="style.css">
+
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
 </head>
 <body>
+
     <div class="stars"></div>
+
     <div class="content">
+        
         <section id="auth-section" class="panel">
             <h1>PI-RUNNER</h1>
-            <p>Pilot Log-In</p>
-            <input type="text" id="username" placeholder="Dein Pilotenname">
-            <input type="password" id="password" placeholder="Passwort">
-            <button onclick="login()">ZUM LEADERBOARD</button>
+            <p class="subtitle">Willkommen zurück, Pilot.</p>
+            
+            <div class="input-group">
+                <input type="text" id="username" placeholder="Dein Pilotennamen (Unity)">
+                <input type="password" id="password" placeholder="Sicherheitscode">
+                <button onclick="login()">INITIALISIERE LOGIN</button>
+            </div>
+            
             <p id="auth-error"></p>
         </section>
 
         <section id="leaderboard-section" class="panel" style="display: none;">
-            <h2>Pilot: <span id="welcome-name">...</span></h2>
-            <div class="score-badge">Highscore: <span id="my-score">0</span></div>
-            <hr>
-            <h3>TOP 10 PILOTEN</h3>
+            <div class="user-info">
+                <h2>Pilot: <span id="welcome-name">---</span></h2>
+                <div class="score-badge">
+                    DEIN REKORD: <span id="my-score">0</span> STELLEN
+                </div>
+            </div>
+
+            <hr class="divider">
+
+            <h3>WELTWEITE TOP 10</h3>
             <table id="leaderboard-table">
                 <thead>
-                    <tr><th>#</th><th>PILOT</th><th>STELLEN</th></tr>
+                    <tr>
+                        <th>#</th>
+                        <th>PILOT</th>
+                        <th>SCORE</th>
+                    </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody>
+                    </tbody>
             </table>
-            <button onclick="logout()" class="logout-btn">ABMELDEN</button>
+
+            <button onclick="logout()" class="logout-btn">SYSTEM ABMELDEN</button>
         </section>
+
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>
