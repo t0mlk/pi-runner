@@ -2,78 +2,93 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Pi-Runner Leaderboard</title>
+    <title>Pi-Runner Key-Diagnose</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        body { background: #050510; color: white; font-family: sans-serif; display: flex; justify-content: center; min-height: 100vh; margin: 0; }
-        .panel { background: rgba(20, 30, 60, 0.9); padding: 30px; border-radius: 20px; border: 1px solid #00d2ff; width: 350px; text-align: center; margin-top: 50px; height: fit-content; }
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #304060; color: white; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: linear-gradient(45deg, #0051ff, #00d2ff); border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; }
-        #err { color: #ff4d4d; font-size: 14px; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; }
-        th, td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        body { background: #050510; color: white; font-family: sans-serif; text-align: center; padding: 40px; }
+        .box { background: #101530; padding: 20px; border-radius: 15px; border: 1px solid #00d2ff; display: inline-block; width: 350px; }
+        .key-btn { margin: 5px; padding: 10px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
+        #btn1 { background: #00d2ff; color: black; }
+        #btn2 { background: #a0a0a0; color: black; }
+        input { width: 90%; padding: 10px; margin: 10px 0; background: #000; color: white; border: 1px solid #333; }
+        #status { margin-top: 20px; font-weight: bold; padding: 10px; border-radius: 5px; }
+        .success { background: rgba(0, 255, 0, 0.2); color: #00ff00; }
+        .error { background: rgba(255, 0, 0, 0.2); color: #ff4d4d; }
     </style>
 </head>
 <body>
-    <div class="panel">
-        <div id="login-ui">
-            <h1>PI-RUNNER</h1>
-            <input type="text" id="u" placeholder="Pilotennname">
-            <input type="password" id="p" placeholder="Passwort">
-            <button onclick="login()">LOGIN</button>
-            <p id="err"></p>
-        </div>
-        <div id="board-ui" style="display:none;">
-            <h2>TOP PILOTEN</h2>
-            <table id="board">
-                <thead><tr><th>#</th><th>Pilot</th><th>Score</th></tr></thead>
-                <tbody></tbody>
-            </table>
-            <button onclick="firebase.auth().signOut()" style="margin-top:20px; background:#304060;">LOGOUT</button>
-        </div>
+
+    <div class="box">
+        <h1>KEY-TESTER</h1>
+        <p>Welcher Key öffnet die Tür?</p>
+        
+        <button id="btn1" class="key-btn" onclick="switchKey(1)">KEY 1 (Browser)</button>
+        <button id="btn2" class="key-btn" onclick="switchKey(2)">KEY 2 (Android)</button>
+        
+        <p><small id="active-key-name">Aktiv: Browser Key</small></p>
+
+        <input type="text" id="user" placeholder="Pilotname">
+        <input type="password" id="pass" placeholder="Passwort">
+        <button onclick="attemptLogin()" style="width:95%; padding:12px; background:white; font-weight:bold; cursor:pointer;">LOGIN VERSUCHEN</button>
+        
+        <div id="status">Bereit zum Test...</div>
     </div>
 
     <script>
-        const config = {
-            apiKey: "AIzaSyA0Et1D50vP8KnaRC1nyNN5dN0OGqpqq7c",
+        // Die beiden Keys aus deinem Google Cloud Dashboard
+        const key1 = "AIzaSyA0Et1D50vP8KnaRC1nyNN5dN0OGqpqq7c"; // Browser Key
+        const key2 = "AIzaSyByE0Nq7eMnd3-TqfR7xP_8Gqpqq7c"; // Android Key (Beispiel - bitte mit deinem Screenshot abgleichen!)
+
+        let currentKey = key1;
+
+        const configBase = {
             authDomain: "lpmzt-5c267.firebaseapp.com",
             databaseURL: "https://lpmzt-5c267-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "lpmzt-5c267",
             storageBucket: "lpmzt-5c267.firebasestorage.app",
             appId: "1:378438452791:web:33bec3f294a63aa41361b2"
         };
-        firebase.initializeApp(config);
 
-        function login() {
-            const email = document.getElementById('u').value.trim().toLowerCase() + "@test.de";
-            const pass = document.getElementById('p').value;
-            firebase.auth().signInWithEmailAndPassword(email, pass).catch(e => {
-                document.getElementById('err').innerText = "Fehler: " + e.message;
+        function switchKey(num) {
+            if (num === 1) {
+                currentKey = key1;
+                document.getElementById('active-key-name').innerText = "Aktiv: Browser Key";
+                document.getElementById('btn1').style.background = "#00d2ff";
+                document.getElementById('btn2').style.background = "#a0a0a0";
+            } else {
+                currentKey = key2;
+                document.getElementById('active-key-name').innerText = "Aktiv: Android Key";
+                document.getElementById('btn2').style.background = "#00d2ff";
+                document.getElementById('btn1').style.background = "#a0a0a0";
+            }
+            // Firebase neu initialisieren
+            firebase.app().delete().then(() => {
+                firebase.initializeApp({...configBase, apiKey: currentKey});
+                document.getElementById('status').className = "";
+                document.getElementById('status').innerText = "Key gewechselt. Bereit.";
             });
         }
 
-        firebase.auth().onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('login-ui').style.display = 'none';
-                document.getElementById('board-ui').style.display = 'block';
-                loadScores();
-            } else {
-                document.getElementById('login-ui').style.display = 'block';
-                document.getElementById('board-ui').style.display = 'none';
-            }
-        });
+        // Initialer Start
+        firebase.initializeApp({...configBase, apiKey: key1});
 
-        function loadScores() {
-            const tbody = document.querySelector('#board tbody');
-            firebase.database().ref('users').orderByChild('highscore').limitToLast(10).on('value', snap => {
-                tbody.innerHTML = "";
-                let list = [];
-                snap.forEach(c => { list.push(c.val()); });
-                list.reverse().forEach((p, i) => {
-                    tbody.innerHTML += `<tr><td>${i+1}</td><td>${p.username}</td><td>${p.highscore}</td></tr>`;
-                });
+        function attemptLogin() {
+            const email = document.getElementById('user').value.trim().toLowerCase() + "@test.de";
+            const pass = document.getElementById('pass').value;
+            const statusDiv = document.getElementById('status');
+
+            statusDiv.innerText = "Prüfe...";
+            
+            firebase.auth().signInWithEmailAndPassword(email, pass)
+            .then(() => {
+                statusDiv.className = "success";
+                statusDiv.innerText = "ERFOLG! Dieser Key funktioniert!";
+            })
+            .catch(err => {
+                statusDiv.className = "error";
+                statusDiv.innerText = "FEHLER: " + err.code;
+                console.error(err);
             });
         }
     </script>
