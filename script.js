@@ -1,4 +1,4 @@
-// Firebase Konfiguration - EXAKT nach deinem neuen Foto übertragen
+// Firebase Konfiguration - Buchstabe für Buchstabe aus deinem Bild
 const firebaseConfig = {
     apiKey: "AIzaSyA0Et1D50vP8KnaRC1nyNN5dN0OGqpqq7c",
     authDomain: "lpmzt-5c267.firebaseapp.com",
@@ -10,7 +10,7 @@ const firebaseConfig = {
     measurementId: "G-M2QSLJ32X1"
 };
 
-// Initialisierung (Compatibility Mode für einfache HTML Seiten)
+// Starten im Compat-Modus
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
@@ -22,37 +22,34 @@ function login() {
     const errorDisplay = document.getElementById('auth-error');
 
     if (!name || !pass) {
-        errorDisplay.innerText = "Bitte Name und Passwort eingeben!";
+        errorDisplay.innerText = "Name und Passwort fehlen!";
         return;
     }
 
-    errorDisplay.innerText = "Verbindung zum Hangar...";
+    errorDisplay.innerText = "Verbindung wird geprüft...";
 
-    // VORSICHT: Wenn du in Unity z.B. "@game.de" nutzt, ändere das hier!
+    // Nutze hier die Endung, die du in Unity beim Registrieren verwendet hast!
     const email = name.trim().toLowerCase() + "@test.de"; 
 
     auth.signInWithEmailAndPassword(email, pass)
         .then(() => {
-            console.log("Login erfolgreich!");
             errorDisplay.innerText = "";
         })
         .catch((error) => {
-            console.error("Firebase Fehler:", error.code);
-            if (error.code === "auth/user-not-found") {
-                errorDisplay.innerText = "Pilot unbekannt! Check die Email-Endung im Script (@test.de).";
-            } else if (error.code === "auth/wrong-password") {
-                errorDisplay.innerText = "Falsches Passwort!";
+            console.error("Firebase sagt:", error.code);
+            if (error.code === "auth/api-key-not-valid") {
+                errorDisplay.innerText = "API-Key Fehler! (Prüfe Authorized Domains in Firebase)";
+            } else if (error.code === "auth/user-not-found") {
+                errorDisplay.innerText = "Pilot nicht gefunden.";
             } else {
-                errorDisplay.innerText = "Fehler: " + error.message;
+                errorDisplay.innerText = "Fehler: " + error.code;
             }
         });
 }
 
-function logout() {
-    auth.signOut();
-}
+function logout() { auth.signOut(); }
 
-// --- STATUS-ÜBERWACHUNG ---
+// --- AUTOMATIK ---
 auth.onAuthStateChanged(user => {
     const loginUI = document.getElementById('auth-section');
     const leaderUI = document.getElementById('leaderboard-section');
@@ -68,7 +65,6 @@ auth.onAuthStateChanged(user => {
     }
 });
 
-// --- DATEN LADEN ---
 function loadUserData(uid) {
     db.ref('users/' + uid).once('value').then(snap => {
         const data = snap.val();
