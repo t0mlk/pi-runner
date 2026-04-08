@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Pi-Runner Leaderboard</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        body { background: #050510; color: white; font-family: sans-serif; display: flex; justify-content: center; padding: 50px; }
+        .box { background: #101530; padding: 30px; border-radius: 15px; border: 1px solid #00d2ff; width: 300px; text-align: center; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #00d2ff; border: none; font-weight: bold; cursor: pointer; border-radius: 5px; }
+        #err { color: #ff4d4d; font-size: 13px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <div id="login-ui">
+            <h1>PI-RUNNER</h1>
+            <input type="text" id="u" placeholder="Pilotennname">
+            <input type="password" id="p" placeholder="Passwort">
+            <button onclick="startLogin()">LOGIN</button>
+            <p id="err"></p>
+        </div>
+        <div id="board-ui" style="display:none;">
+            <h2>TOP PILOTEN</h2>
+            <div id="data">Lade...</div>
+            <button onclick="firebase.auth().signOut()" style="margin-top:20px; background:#444;">LOGOUT</button>
+        </div>
+    </div>
+
+    <script>
+        const config = {
+            apiKey: "AIzaSyA0Et1D50vP8KnaRC1nyNN5dN0OGqpqq7c",
+            authDomain: "lpmzt-5c267.firebaseapp.com",
+            databaseURL: "https://lpmzt-5c267-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "lpmzt-5c267",
+            storageBucket: "lpmzt-5c267.firebasestorage.app",
+            messagingSenderId: "378438452791",
+            appId: "1:378438452791:web:33bec3f294a63aa41361b2"
+        };
+
+        try {
+            firebase.initializeApp(config);
+            console.log("Firebase bereit.");
+        } catch (e) {
+            console.error("Initialisierungsfehler:", e);
+        }
+
+        function startLogin() {
+            const email = document.getElementById('u').value.trim().toLowerCase() + "@test.de";
+            const pass = document.getElementById('p').value;
+            
+            firebase.auth().signInWithEmailAndPassword(email, pass).catch(e => {
+                document.getElementById('err').innerText = "Fehler: " + e.message;
+                console.log("Fehler-Details:", e.code);
+            });
+        }
+
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('login-ui').style.display = 'none';
+                document.getElementById('board-ui').style.display = 'block';
+                loadBoard();
+            } else {
+                document.getElementById('login-ui').style.display = 'block';
+                document.getElementById('board-ui').style.display = 'none';
+            }
+        });
+
+        function loadBoard() {
+            firebase.database().ref('users').orderByChild('highscore').limitToLast(10).on('value', snap => {
+                let html = "<table>";
+                let list = [];
+                snap.forEach(c => { list.push(c.val()); });
+                list.reverse().forEach((p, i) => {
+                    html += `<tr><td>${i+1}.</td><td>${p.username}</td><td>${p.highscore}</td></tr>`;
+                });
+                document.getElementById('data').innerHTML = html + "</table>";
+            });
+        }
+    </script>
+</body>
+</html>
