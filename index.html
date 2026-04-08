@@ -2,95 +2,39 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Pi-Runner Key-Diagnose</title>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <style>
-        body { background: #050510; color: white; font-family: sans-serif; text-align: center; padding: 40px; }
-        .box { background: #101530; padding: 20px; border-radius: 15px; border: 1px solid #00d2ff; display: inline-block; width: 350px; }
-        .key-btn { margin: 5px; padding: 10px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
-        #btn1 { background: #00d2ff; color: black; }
-        #btn2 { background: #a0a0a0; color: black; }
-        input { width: 90%; padding: 10px; margin: 10px 0; background: #000; color: white; border: 1px solid #333; }
-        #status { margin-top: 20px; font-weight: bold; padding: 10px; border-radius: 5px; }
-        .success { background: rgba(0, 255, 0, 0.2); color: #00ff00; }
-        .error { background: rgba(255, 0, 0, 0.2); color: #ff4d4d; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pi-Runner | Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
 </head>
 <body>
+    <div class="stars"></div>
+    <div class="content">
+        <section id="auth-section" class="panel">
+            <h1>PI-RUNNER</h1>
+            <p>Pilot Log-In</p>
+            <input type="text" id="username" placeholder="Dein Pilotenname">
+            <input type="password" id="password" placeholder="Passwort">
+            <button onclick="login()">ZUM LEADERBOARD</button>
+            <p id="auth-error"></p>
+        </section>
 
-    <div class="box">
-        <h1>KEY-TESTER</h1>
-        <p>Welcher Key öffnet die Tür?</p>
-        
-        <button id="btn1" class="key-btn" onclick="switchKey(1)">KEY 1 (Browser)</button>
-        <button id="btn2" class="key-btn" onclick="switchKey(2)">KEY 2 (Android)</button>
-        
-        <p><small id="active-key-name">Aktiv: Browser Key</small></p>
-
-        <input type="text" id="user" placeholder="Pilotname">
-        <input type="password" id="pass" placeholder="Passwort">
-        <button onclick="attemptLogin()" style="width:95%; padding:12px; background:white; font-weight:bold; cursor:pointer;">LOGIN VERSUCHEN</button>
-        
-        <div id="status">Bereit zum Test...</div>
+        <section id="leaderboard-section" class="panel" style="display: none;">
+            <h2>Pilot: <span id="welcome-name">...</span></h2>
+            <div class="score-badge">Highscore: <span id="my-score">0</span></div>
+            <hr>
+            <h3>TOP 10 PILOTEN</h3>
+            <table id="leaderboard-table">
+                <thead>
+                    <tr><th>#</th><th>PILOT</th><th>STELLEN</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <button onclick="logout()" class="logout-btn">ABMELDEN</button>
+        </section>
     </div>
-
-    <script>
-        // Die beiden Keys aus deinem Google Cloud Dashboard
-        const key1 = "AIzaSyA0Et1D50vP8KnaRC1nyNN5dN0OGqpqq7c"; // Browser Key
-        const key2 = "AIzaSyByE0Nq7eMnd3-TqfR7xP_8Gqpqq7c"; // Android Key (Beispiel - bitte mit deinem Screenshot abgleichen!)
-
-        let currentKey = key1;
-
-        const configBase = {
-            authDomain: "lpmzt-5c267.firebaseapp.com",
-            databaseURL: "https://lpmzt-5c267-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "lpmzt-5c267",
-            storageBucket: "lpmzt-5c267.firebasestorage.app",
-            appId: "1:378438452791:web:33bec3f294a63aa41361b2"
-        };
-
-        function switchKey(num) {
-            if (num === 1) {
-                currentKey = key1;
-                document.getElementById('active-key-name').innerText = "Aktiv: Browser Key";
-                document.getElementById('btn1').style.background = "#00d2ff";
-                document.getElementById('btn2').style.background = "#a0a0a0";
-            } else {
-                currentKey = key2;
-                document.getElementById('active-key-name').innerText = "Aktiv: Android Key";
-                document.getElementById('btn2').style.background = "#00d2ff";
-                document.getElementById('btn1').style.background = "#a0a0a0";
-            }
-            // Firebase neu initialisieren
-            firebase.app().delete().then(() => {
-                firebase.initializeApp({...configBase, apiKey: currentKey});
-                document.getElementById('status').className = "";
-                document.getElementById('status').innerText = "Key gewechselt. Bereit.";
-            });
-        }
-
-        // Initialer Start
-        firebase.initializeApp({...configBase, apiKey: key1});
-
-        function attemptLogin() {
-            const email = document.getElementById('user').value.trim().toLowerCase() + "@test.de";
-            const pass = document.getElementById('pass').value;
-            const statusDiv = document.getElementById('status');
-
-            statusDiv.innerText = "Prüfe...";
-            
-            firebase.auth().signInWithEmailAndPassword(email, pass)
-            .then(() => {
-                statusDiv.className = "success";
-                statusDiv.innerText = "ERFOLG! Dieser Key funktioniert!";
-            })
-            .catch(err => {
-                statusDiv.className = "error";
-                statusDiv.innerText = "FEHLER: " + err.code;
-                console.error(err);
-            });
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
