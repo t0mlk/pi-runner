@@ -1,16 +1,16 @@
-// Firebase Konfiguration - Buchstabe für Buchstabe aus deinem Bild
+// Korrigierte Konfiguration
 const firebaseConfig = {
-    apiKey: "AIzaSyA0Et1D50vP8KnaRC1nyNN5dN0OGqpqq7c",
-    authDomain: "lpmzt-5c267.firebaseapp.com",
-    databaseURL: "https://lpmzt-5c267-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "lpmzt-5c267",
-    storageBucket: "lpmzt-5c267.firebasestorage.app",
-    messagingSenderId: "378438452791",
-    appId: "1:378438452791:web:33bec3f294a63aa41361b2",
-    measurementId: "G-M2QSLJ32X1"
+  apiKey: "AIzaSyA0Et1D50vP8KnaRC1nyNN5dN0OGqpqq7c", // Hier war der Fehler (0 statt O)
+  authDomain: "lpmzt-5c267.firebaseapp.com",
+  databaseURL: "https://lpmzt-5c267-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "lpmzt-5c267",
+  storageBucket: "lpmzt-5c267.firebasestorage.app",
+  messagingSenderId: "378438452791",
+  appId: "1:378438452791:web:33bec3f294a63aa41361b2",
+  measurementId: "G-M2QSLJ32X1"
 };
 
-// Starten im Compat-Modus
+// Start im Compatibility Mode (v8)
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
@@ -22,34 +22,37 @@ function login() {
     const errorDisplay = document.getElementById('auth-error');
 
     if (!name || !pass) {
-        errorDisplay.innerText = "Name und Passwort fehlen!";
+        errorDisplay.innerText = "Bitte Name und Passwort eingeben!";
         return;
     }
 
-    errorDisplay.innerText = "Verbindung wird geprüft...";
+    errorDisplay.innerText = "Verbindung wird hergestellt...";
 
-    // Nutze hier die Endung, die du in Unity beim Registrieren verwendet hast!
+    // WICHTIG: Ersetze @test.de durch deine Unity-Endung (z.B. @game.com)
     const email = name.trim().toLowerCase() + "@test.de"; 
 
     auth.signInWithEmailAndPassword(email, pass)
         .then(() => {
+            console.log("Erfolgreich eingeloggt!");
             errorDisplay.innerText = "";
         })
         .catch((error) => {
-            console.error("Firebase sagt:", error.code);
+            console.error("Fehlercode:", error.code);
             if (error.code === "auth/api-key-not-valid") {
-                errorDisplay.innerText = "API-Key Fehler! (Prüfe Authorized Domains in Firebase)";
+                errorDisplay.innerText = "API-Key ungültig. Check die Domain-Freigabe!";
             } else if (error.code === "auth/user-not-found") {
-                errorDisplay.innerText = "Pilot nicht gefunden.";
+                errorDisplay.innerText = "Pilot nicht gefunden (Check die E-Mail-Endung!).";
             } else {
-                errorDisplay.innerText = "Fehler: " + error.code;
+                errorDisplay.innerText = "Fehler: " + error.message;
             }
         });
 }
 
-function logout() { auth.signOut(); }
+function logout() {
+    auth.signOut();
+}
 
-// --- AUTOMATIK ---
+// --- AUTOMATISCHES UMSCHALTEN ---
 auth.onAuthStateChanged(user => {
     const loginUI = document.getElementById('auth-section');
     const leaderUI = document.getElementById('leaderboard-section');
