@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <title>Pi-Runner Leaderboard</title>
@@ -7,26 +7,31 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        body { background: #050510; color: white; font-family: sans-serif; display: flex; justify-content: center; padding: 50px; }
-        .box { background: #101530; padding: 30px; border-radius: 15px; border: 1px solid #00d2ff; width: 300px; text-align: center; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #00d2ff; border: none; font-weight: bold; cursor: pointer; border-radius: 5px; }
-        #err { color: #ff4d4d; font-size: 13px; margin-top: 15px; }
+        body { background: #050510; color: white; font-family: sans-serif; display: flex; justify-content: center; min-height: 100vh; margin: 0; }
+        .panel { background: rgba(20, 30, 60, 0.9); padding: 30px; border-radius: 20px; border: 1px solid #00d2ff; width: 350px; text-align: center; margin-top: 50px; height: fit-content; }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid #304060; color: white; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: linear-gradient(45deg, #0051ff, #00d2ff); border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        #err { color: #ff4d4d; font-size: 14px; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; }
+        th, td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); }
     </style>
 </head>
 <body>
-    <div class="box">
+    <div class="panel">
         <div id="login-ui">
             <h1>PI-RUNNER</h1>
             <input type="text" id="u" placeholder="Pilotennname">
             <input type="password" id="p" placeholder="Passwort">
-            <button onclick="startLogin()">LOGIN</button>
+            <button onclick="login()">LOGIN</button>
             <p id="err"></p>
         </div>
         <div id="board-ui" style="display:none;">
             <h2>TOP PILOTEN</h2>
-            <div id="data">Lade...</div>
-            <button onclick="firebase.auth().signOut()" style="margin-top:20px; background:#444;">LOGOUT</button>
+            <table id="board">
+                <thead><tr><th>#</th><th>Pilot</th><th>Score</th></tr></thead>
+                <tbody></tbody>
+            </table>
+            <button onclick="firebase.auth().signOut()" style="margin-top:20px; background:#304060;">LOGOUT</button>
         </div>
     </div>
 
@@ -37,24 +42,15 @@
             databaseURL: "https://lpmzt-5c267-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "lpmzt-5c267",
             storageBucket: "lpmzt-5c267.firebasestorage.app",
-            messagingSenderId: "378438452791",
             appId: "1:378438452791:web:33bec3f294a63aa41361b2"
         };
+        firebase.initializeApp(config);
 
-        try {
-            firebase.initializeApp(config);
-            console.log("Firebase bereit.");
-        } catch (e) {
-            console.error("Initialisierungsfehler:", e);
-        }
-
-        function startLogin() {
+        function login() {
             const email = document.getElementById('u').value.trim().toLowerCase() + "@test.de";
             const pass = document.getElementById('p').value;
-            
             firebase.auth().signInWithEmailAndPassword(email, pass).catch(e => {
                 document.getElementById('err').innerText = "Fehler: " + e.message;
-                console.log("Fehler-Details:", e.code);
             });
         }
 
@@ -62,22 +58,22 @@
             if (user) {
                 document.getElementById('login-ui').style.display = 'none';
                 document.getElementById('board-ui').style.display = 'block';
-                loadBoard();
+                loadScores();
             } else {
                 document.getElementById('login-ui').style.display = 'block';
                 document.getElementById('board-ui').style.display = 'none';
             }
         });
 
-        function loadBoard() {
+        function loadScores() {
+            const tbody = document.querySelector('#board tbody');
             firebase.database().ref('users').orderByChild('highscore').limitToLast(10).on('value', snap => {
-                let html = "<table>";
+                tbody.innerHTML = "";
                 let list = [];
                 snap.forEach(c => { list.push(c.val()); });
                 list.reverse().forEach((p, i) => {
-                    html += `<tr><td>${i+1}.</td><td>${p.username}</td><td>${p.highscore}</td></tr>`;
+                    tbody.innerHTML += `<tr><td>${i+1}</td><td>${p.username}</td><td>${p.highscore}</td></tr>`;
                 });
-                document.getElementById('data').innerHTML = html + "</table>";
             });
         }
     </script>
