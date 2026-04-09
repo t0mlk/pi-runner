@@ -7,7 +7,7 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
 
     <style>
         body { margin: 0; background: #050510; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
@@ -22,16 +22,7 @@
         button:hover { transform: scale(1.02); box-shadow: 0 0 15px #00d2ff; }
         #auth-error { color: #ff4d4d; font-size: 14px; margin-top: 15px; min-height: 20px; }
         
-        /* Leaderboard Scroll-Bereich */
-        #leaderboard-container { 
-            max-height: 400px; 
-            overflow-y: auto; 
-            margin-top: 20px; 
-            border-radius: 10px;
-            border: 1px solid rgba(0, 210, 255, 0.1);
-            background: rgba(0, 0, 0, 0.2);
-        }
-        /* Schickerer Scrollbalken */
+        #leaderboard-container { max-height: 400px; overflow-y: auto; margin-top: 20px; border-radius: 10px; border: 1px solid rgba(0, 210, 255, 0.1); background: rgba(0, 0, 0, 0.2); }
         #leaderboard-container::-webkit-scrollbar { width: 6px; }
         #leaderboard-container::-webkit-scrollbar-thumb { background: #00d2ff; border-radius: 10px; }
 
@@ -82,7 +73,6 @@
         const firebaseConfig = {
             apiKey: "AIzaSyA0Et1D50vP8KnaRC1nyNN5dNO0Gqpqq7c",
             authDomain: "lpmzt-5c267.firebaseapp.com",
-            databaseURL: "https://lpmzt-5c267-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "lpmzt-5c267",
             storageBucket: "lpmzt-5c267.firebasestorage.app",
             messagingSenderId: "378438452791",
@@ -92,7 +82,7 @@
 
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const db = firebase.database();
+        const db = firebase.firestore(); // UMGESTELLT AUF FIRESTORE
 
         function login() {
             const name = document.getElementById('username').value;
@@ -104,15 +94,10 @@
                 return;
             }
 
-            // Wir nutzen die funktionierende Kleinbuchstaben-Logik
             const email = name.trim().toLowerCase() + "@pi.quest";
 
             auth.signInWithEmailAndPassword(email, pass).catch(e => {
-                if(e.code === "auth/invalid-login-credentials" || e.code === "auth/user-not-found") {
-                    err.innerText = "Name oder Passwort falsch.";
-                } else {
-                    err.innerText = "Fehler: " + e.message;
-                }
+                err.innerText = "Name oder Passwort falsch.";
             });
         }
 
@@ -129,9 +114,10 @@
         });
 
         function loadUserData(uid) {
-            db.ref('users/' + uid).on('value', snap => {
-                const d = snap.val();
-                if(d) {
+            // Firestore Abfrage für den aktuellen User
+            db.collection("users").doc(uid).onSnapshot(doc => {
+                if(doc.exists) {
+                    const d = doc.data();
                     document.getElementById('welcome-name').innerText = "Hallo, " + (d.username || "Spieler");
                     document.getElementById('my-score').innerText = d.highscore || 0;
                 }
@@ -140,21 +126,23 @@
 
         function loadLeaderboard() {
             const tbody = document.querySelector('#leaderboard-table tbody');
-            // LIMIT AUF 100 GESTELLT
-            db.ref('users').orderByChild('highscore').limitToLast(100).on('value', snap => {
+            
+            // Firestore Abfrage: Sortiert nach highscore, absteigend (descending)
+            db.collection("users")
+              .orderBy("highscore", "desc")
+              .limit(100)
+              .onSnapshot(snap => {
                 tbody.innerHTML = "";
-                let players = [];
-                snap.forEach(child => {
-                    players.push(child.val());
-                });
-                
-                players.reverse().forEach((p, i) => {
+                let index = 1;
+                snap.forEach(doc => {
+                    const p = doc.data();
                     const row = `<tr>
-                        <td class="${i === 0 ? 'gold' : ''}">${i + 1}</td>
+                        <td class="${index === 1 ? 'gold' : ''}">${index}</td>
                         <td>${p.username || 'Anonym'}</td>
                         <td>${p.highscore || 0}</td>
                     </tr>`;
                     tbody.innerHTML += row;
+                    index++;
                 });
             });
         }
