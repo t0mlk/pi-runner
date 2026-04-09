@@ -18,12 +18,26 @@
         .subtitle { font-size: 12px; color: #80a0c0; text-transform: uppercase; margin-bottom: 25px; }
         input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.6); border: 1px solid #304060; color: white; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
         input:focus { border-color: #00d2ff; outline: none; box-shadow: 0 0 8px #00d2ff; }
-        button { width: 100%; padding: 14px; margin-top: 15px; background: linear-gradient(45deg, #0051ff, #00d2ff); border: none; color: white; font-weight: bold; border-radius: 10px; cursor: pointer; transition: transform 0.2s; font-size: 16px; }
+        button { width: 100%; padding: 14px; margin-top: 15px; background: linear-gradient(45deg, #0051ff, #00d2ff); border: none; color: white; font-weight: bold; border-radius: 10px; cursor: pointer; transition: transform 0.2s; font-size: 16px; text-transform: uppercase; }
         button:hover { transform: scale(1.02); box-shadow: 0 0 15px #00d2ff; }
         #auth-error { color: #ff4d4d; font-size: 14px; margin-top: 15px; min-height: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { padding: 12px; border-bottom: 2px solid #00d2ff; color: #00d2ff; font-size: 14px; }
-        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 15px; }
+        
+        /* Leaderboard Scroll-Bereich */
+        #leaderboard-container { 
+            max-height: 400px; 
+            overflow-y: auto; 
+            margin-top: 20px; 
+            border-radius: 10px;
+            border: 1px solid rgba(0, 210, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+        }
+        /* Schickerer Scrollbalken */
+        #leaderboard-container::-webkit-scrollbar { width: 6px; }
+        #leaderboard-container::-webkit-scrollbar-thumb { background: #00d2ff; border-radius: 10px; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { padding: 12px; border-bottom: 2px solid #00d2ff; color: #00d2ff; font-size: 14px; position: sticky; top: 0; background: #141e3c; z-index: 10; }
+        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 15px; text-align: center; }
         .gold { color: #ffd700; font-weight: bold; text-shadow: 0 0 5px #ffd700; }
         .score-badge { background: rgba(0, 210, 255, 0.15); padding: 15px; border-radius: 12px; margin: 20px 0; border: 1px solid rgba(0, 210, 255, 0.3); }
         .logout-btn { background: #1a2035; border: 1px solid #304060; margin-top: 25px; font-size: 12px; }
@@ -49,13 +63,17 @@
                 Persönlicher Rekord: <span id="my-score" style="color: #00d2ff; font-weight: bold;">0</span>
             </div>
             <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
-            <h3>TOP 10 BESTENLISTE</h3>
-            <table id="leaderboard-table">
-                <thead>
-                    <tr><th>RANG</th><th>NAME</th><th>STELLEN</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <h3>TOP 100 BESTENLISTE</h3>
+            
+            <div id="leaderboard-container">
+                <table id="leaderboard-table">
+                    <thead>
+                        <tr><th>RANG</th><th>NAME</th><th>STELLEN</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
             <button onclick="logout()" class="logout-btn">ABMELDEN</button>
         </section>
     </div>
@@ -86,11 +104,11 @@
                 return;
             }
 
-            // Wir lassen toLowerCase() drin, da du sagtest dieser Code geht!
+            // Wir nutzen die funktionierende Kleinbuchstaben-Logik
             const email = name.trim().toLowerCase() + "@pi.quest";
 
             auth.signInWithEmailAndPassword(email, pass).catch(e => {
-                if(e.code === "auth/invalid-login-credentials") {
+                if(e.code === "auth/invalid-login-credentials" || e.code === "auth/user-not-found") {
                     err.innerText = "Name oder Passwort falsch.";
                 } else {
                     err.innerText = "Fehler: " + e.message;
@@ -122,7 +140,8 @@
 
         function loadLeaderboard() {
             const tbody = document.querySelector('#leaderboard-table tbody');
-            db.ref('users').orderByChild('highscore').limitToLast(10).on('value', snap => {
+            // LIMIT AUF 100 GESTELLT
+            db.ref('users').orderByChild('highscore').limitToLast(100).on('value', snap => {
                 tbody.innerHTML = "";
                 let players = [];
                 snap.forEach(child => {
