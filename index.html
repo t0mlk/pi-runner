@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PI-RUNNER | Dashboard</title>
+    <title>PI-RUNNER | Leaderboard</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
@@ -14,14 +14,15 @@
         .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #101530 0%, #050510 100%); z-index: -1; }
         .content { width: 100%; max-width: 450px; padding: 40px 20px; }
         .panel { background: rgba(20, 30, 60, 0.85); backdrop-filter: blur(10px); border: 1px solid #00d2ff; border-radius: 20px; padding: 30px; box-shadow: 0 0 30px rgba(0, 210, 255, 0.2); text-align: center; }
-        h1 { color: #00d2ff; letter-spacing: 4px; text-shadow: 0 0 10px #00d2ff; margin: 0 0 20px 0; }
+        h1 { color: #00d2ff; letter-spacing: 4px; text-shadow: 0 0 10px #00d2ff; margin-bottom: 20px; }
         input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.6); border: 1px solid #304060; color: white; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
         button { width: 100%; padding: 14px; margin-top: 15px; background: linear-gradient(45deg, #0051ff, #00d2ff); border: none; color: white; font-weight: bold; border-radius: 10px; cursor: pointer; font-size: 16px; text-transform: uppercase; }
-        #auth-error { color: #ff4d4d; font-size: 14px; margin-top: 15px; }
+        #auth-error { color: #ff4d4d; font-size: 14px; margin-top: 15px; min-height: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { padding: 12px; border-bottom: 2px solid #00d2ff; color: #00d2ff; text-align: left; }
         td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left; }
         .gold { color: #ffd700; font-weight: bold; }
+        .score-badge { background: rgba(0, 210, 255, 0.15); padding: 15px; border-radius: 12px; margin: 20px 0; border: 1px solid rgba(0, 210, 255, 0.3); }
     </style>
 </head>
 <body>
@@ -39,15 +40,16 @@
 
         <section id="leaderboard-section" class="panel" style="display: none;">
             <h2 id="welcome-text">---</h2>
-            <div style="background: rgba(0,210,255,0.1); padding: 15px; border-radius: 10px; margin: 20px 0;">
+            <div class="score-badge">
                 Rekord: <span id="my-score" style="color:#00d2ff; font-weight:bold;">0</span>
             </div>
-            <h3>BESTENLISTE</h3>
             <table>
-                <thead><tr><th>#</th><th>NAME</th><th>SCORE</th></tr></thead>
+                <thead>
+                    <tr><th>#</th><th>NAME</th><th>SCORE</th></tr>
+                </thead>
                 <tbody id="leader-body"></tbody>
             </table>
-            <button onclick="logout()" style="background:#1a2035; margin-top:20px;">ABMELDEN</button>
+            <button onclick="logout()" style="background:#1a2035; margin-top:20px; font-size: 12px;">ABMELDEN</button>
         </section>
     </div>
 
@@ -67,18 +69,22 @@
         const db = firebase.database();
 
         function login() {
-            const name = document.getElementById('login-name').value.trim();
+            const nameInput = document.getElementById('login-name').value;
             const pass = document.getElementById('login-pass').value;
             const err = document.getElementById('auth-error');
 
-            // WICHTIG: Wir bauen die E-Mail zusammen
-            const email = name + "@pi.quest";
+            if(!nameInput || !pass) {
+                err.innerText = "Bitte Name und Passwort eingeben.";
+                return;
+            }
+
+            // EXAKT wie getippt (Groß/Klein bleibt), nur Leerzeichen am Rand weg
+            const email = nameInput.trim() + "@pi.quest";
             
-            // Das hier hilft uns beim Suchen: Drücke F12 im Browser, um das zu sehen!
             console.log("Versuche Login mit: " + email);
 
             auth.signInWithEmailAndPassword(email, pass).catch(e => {
-                console.error("Firebase Fehlercode:", e.code);
+                console.error("Fehler:", e.code);
                 err.innerText = "Name oder Passwort nicht korrekt.";
             });
         }
@@ -86,9 +92,14 @@
         function logout() { auth.signOut(); }
 
         auth.onAuthStateChanged(user => {
-            document.getElementById('auth-section').style.display = user ? 'none' : 'block';
-            document.getElementById('leaderboard-section').style.display = user ? 'block' : 'none';
+            const authUI = document.getElementById('auth-section');
+            const leaderUI = document.getElementById('leaderboard-section');
+
             if(user) {
+                authUI.style.display = 'none';
+                leaderUI.style.display = 'block';
+
+                // Eigene Daten aus Realtime Database
                 db.ref('users/' + user.uid).on('value', snap => {
                     const d = snap.val();
                     if(d) {
@@ -96,15 +107,24 @@
                         document.getElementById('my-score').innerText = d.highscore || 0;
                     }
                 });
+
+                // Bestenliste laden
                 db.ref('users').orderByChild('highscore').limitToLast(10).on('value', snap => {
                     const tbody = document.getElementById('leader-body');
                     tbody.innerHTML = "";
                     let players = [];
                     snap.forEach(c => { players.push(c.val()); });
                     players.reverse().forEach((p, i) => {
-                        tbody.innerHTML += `<tr><td class="${i===0?'gold':''}">${i+1}</td><td>${p.username}</td><td>${p.highscore}</td></tr>`;
+                        tbody.innerHTML += `<tr>
+                            <td class="${i===0?'gold':''}">${i+1}</td>
+                            <td>${p.username || 'Unbekannt'}</td>
+                            <td>${p.highscore || 0}</td>
+                        </tr>`;
                     });
                 });
+            } else {
+                authUI.style.display = 'block';
+                leaderUI.style.display = 'none';
             }
         });
     </script>
