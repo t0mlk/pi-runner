@@ -36,10 +36,10 @@
     <div class="content">
         <section id="auth-section" class="panel">
             <h1>PI-RUNNER</h1>
-            <p class="subtitle">Zentralrechner Login</p>
-            <input type="text" id="username" placeholder="Pilotennamen">
-            <input type="password" id="password" placeholder="Sicherheitscode">
-            <button onclick="login()">LOGIN STARTEN</button>
+            <p class="subtitle">Anmeldung</p>
+            <input type="text" id="username" placeholder="Name">
+            <input type="password" id="password" placeholder="Passwort">
+            <button onclick="login()">ANMELDEN</button>
             <p id="auth-error"></p>
         </section>
 
@@ -49,10 +49,10 @@
                 Persönlicher Rekord: <span id="my-score" style="color: #00d2ff; font-weight: bold;">0</span>
             </div>
             <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
-            <h3>TOP 10 PILOTEN</h3>
+            <h3>TOP 10 BESTENLISTE</h3>
             <table id="leaderboard-table">
                 <thead>
-                    <tr><th>RANK</th><th>PILOT</th><th>STELLEN</th></tr>
+                    <tr><th>RANG</th><th>NAME</th><th>STELLEN</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -61,7 +61,6 @@
     </div>
 
     <script>
-        // Deine Konfiguration (Exakt korrigiert)
         const firebaseConfig = {
             apiKey: "AIzaSyA0Et1D50vP8KnaRC1nyNN5dNO0Gqpqq7c",
             authDomain: "lpmzt-5c267.firebaseapp.com",
@@ -73,7 +72,6 @@
             measurementId: "G-M2QSLJ32X1"
         };
 
-        // Firebase Initialisierung
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
@@ -88,11 +86,10 @@
                 return;
             }
 
-            // HINWEIS: Prüfe, welche Endung du in Unity nutzt!
+            // Wir lassen toLowerCase() drin, da du sagtest dieser Code geht!
             const email = name.trim().toLowerCase() + "@pi.quest";
 
             auth.signInWithEmailAndPassword(email, pass).catch(e => {
-                console.error(e);
                 if(e.code === "auth/invalid-login-credentials") {
                     err.innerText = "Name oder Passwort falsch.";
                 } else {
@@ -103,7 +100,6 @@
 
         function logout() { auth.signOut(); }
 
-        // Überwacht Login-Status
         auth.onAuthStateChanged(user => {
             document.getElementById('auth-section').style.display = user ? 'none' : 'block';
             document.getElementById('leaderboard-section').style.display = user ? 'block' : 'none';
@@ -118,7 +114,7 @@
             db.ref('users/' + uid).on('value', snap => {
                 const d = snap.val();
                 if(d) {
-                    document.getElementById('welcome-name').innerText = "Pilot: " + (d.username || "Unbekannt");
+                    document.getElementById('welcome-name').innerText = "Hallo, " + (d.username || "Spieler");
                     document.getElementById('my-score').innerText = d.highscore || 0;
                 }
             });
