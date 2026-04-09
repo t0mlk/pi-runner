@@ -4,68 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PI-RUNNER | Dashboard</title>
-    
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
-
     <style>
-        body { margin: 0; background: #050510; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
+        body { margin: 0; background: #050510; color: white; font-family: sans-serif; display: flex; justify-content: center; min-height: 100vh; }
         .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #101530 0%, #050510 100%); z-index: -1; }
         .content { width: 100%; max-width: 450px; padding: 40px 20px; }
-        .panel { background: rgba(20, 30, 60, 0.85); backdrop-filter: blur(10px); border: 1px solid #00d2ff; border-radius: 20px; padding: 30px; box-shadow: 0 0 30px rgba(0, 210, 255, 0.2); text-align: center; }
-        h1 { color: #00d2ff; letter-spacing: 4px; text-shadow: 0 0 10px #00d2ff; margin-bottom: 5px; }
-        .subtitle { font-size: 12px; color: #80a0c0; text-transform: uppercase; margin-bottom: 25px; }
-        input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.6); border: 1px solid #304060; color: white; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
-        input:focus { border-color: #00d2ff; outline: none; box-shadow: 0 0 8px #00d2ff; }
-        button { width: 100%; padding: 14px; margin-top: 15px; background: linear-gradient(45deg, #0051ff, #00d2ff); border: none; color: white; font-weight: bold; border-radius: 10px; cursor: pointer; transition: transform 0.2s; font-size: 16px; text-transform: uppercase; }
-        button:hover { transform: scale(1.02); box-shadow: 0 0 15px #00d2ff; }
-        #auth-error { color: #ff4d4d; font-size: 14px; margin-top: 15px; min-height: 20px; }
-        
-        #leaderboard-container { max-height: 400px; overflow-y: auto; margin-top: 20px; border-radius: 10px; border: 1px solid rgba(0, 210, 255, 0.1); background: rgba(0, 0, 0, 0.2); }
-        #leaderboard-container::-webkit-scrollbar { width: 6px; }
-        #leaderboard-container::-webkit-scrollbar-thumb { background: #00d2ff; border-radius: 10px; }
-
+        .panel { background: rgba(20, 30, 60, 0.85); backdrop-filter: blur(10px); border: 1px solid #00d2ff; border-radius: 20px; padding: 30px; text-align: center; }
+        h1 { color: #00d2ff; letter-spacing: 4px; margin-bottom: 20px; }
+        input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.6); border: 1px solid #304060; color: white; border-radius: 10px; }
+        button { width: 100%; padding: 14px; background: linear-gradient(45deg, #0051ff, #00d2ff); border: none; color: white; font-weight: bold; border-radius: 10px; cursor: pointer; margin-top: 10px; }
+        #leaderboard-container { max-height: 350px; overflow-y: auto; margin-top: 20px; background: rgba(0, 0, 0, 0.2); border-radius: 10px; }
         table { width: 100%; border-collapse: collapse; }
-        th { padding: 12px; border-bottom: 2px solid #00d2ff; color: #00d2ff; font-size: 14px; position: sticky; top: 0; background: #141e3c; z-index: 10; }
-        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 15px; text-align: center; }
-        .gold { color: #ffd700; font-weight: bold; text-shadow: 0 0 5px #ffd700; }
-        .score-badge { background: rgba(0, 210, 255, 0.15); padding: 15px; border-radius: 12px; margin: 20px 0; border: 1px solid rgba(0, 210, 255, 0.3); }
-        .logout-btn { background: #1a2035; border: 1px solid #304060; margin-top: 25px; font-size: 12px; }
+        th { padding: 10px; border-bottom: 2px solid #00d2ff; color: #00d2ff; }
+        td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .gold { color: #ffd700; font-weight: bold; }
+        .score-badge { background: rgba(0, 210, 255, 0.1); padding: 15px; border-radius: 12px; margin: 15px 0; border: 1px solid #00d2ff; }
     </style>
 </head>
 <body>
-
     <div class="stars"></div>
-
     <div class="content">
         <section id="auth-section" class="panel">
             <h1>PI-RUNNER</h1>
-            <p class="subtitle">Anmeldung</p>
             <input type="text" id="username" placeholder="Name">
             <input type="password" id="password" placeholder="Passwort">
             <button onclick="login()">ANMELDEN</button>
-            <p id="auth-error"></p>
+            <p id="auth-error" style="color: red;"></p>
         </section>
 
         <section id="leaderboard-section" class="panel" style="display: none;">
             <h2 id="welcome-name">---</h2>
-            <div class="score-badge">
-                Persönlicher Rekord: <span id="my-score" style="color: #00d2ff; font-weight: bold;">0</span>
-            </div>
-            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
-            <h3>TOP 100 BESTENLISTE</h3>
-            
+            <div class="score-badge">Rekord: <span id="my-score">0</span> | Rang: <span id="my-rank">?</span></div>
+            <h3>TOP 100</h3>
             <div id="leaderboard-container">
                 <table id="leaderboard-table">
-                    <thead>
-                        <tr><th>RANG</th><th>NAME</th><th>STELLEN</th></tr>
-                    </thead>
+                    <thead><tr><th>#</th><th>NAME</th><th>PUNKTE</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
-
-            <button onclick="logout()" class="logout-btn">ABMELDEN</button>
+            <button onclick="auth.signOut()" style="background: #1a2035; margin-top: 20px;">ABMELDEN</button>
         </section>
     </div>
 
@@ -76,72 +55,42 @@
             projectId: "lpmzt-5c267",
             storageBucket: "lpmzt-5c267.firebasestorage.app",
             messagingSenderId: "378438452791",
-            appId: "1:378438452791:web:33bec3f294a63aa41361b2",
-            measurementId: "G-M2QSLJ32X1"
+            appId: "1:378438452791:web:33bec3f294a63aa41361b2"
         };
-
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const db = firebase.firestore(); // UMGESTELLT AUF FIRESTORE
+        const db = firebase.firestore();
 
         function login() {
-            const name = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
-            const err = document.getElementById('auth-error');
-
-            if(!name || !pass) {
-                err.innerText = "Bitte Login-Daten eingeben.";
-                return;
-            }
-
-            const email = name.trim().toLowerCase() + "@pi.quest";
-
-            auth.signInWithEmailAndPassword(email, pass).catch(e => {
-                err.innerText = "Name oder Passwort falsch.";
+            const email = document.getElementById('username').value.trim().toLowerCase() + "@pi.quest";
+            auth.signInWithEmailAndPassword(email, document.getElementById('password').value).catch(e => {
+                document.getElementById('auth-error').innerText = "Fehler!";
             });
         }
-
-        function logout() { auth.signOut(); }
 
         auth.onAuthStateChanged(user => {
             document.getElementById('auth-section').style.display = user ? 'none' : 'block';
             document.getElementById('leaderboard-section').style.display = user ? 'block' : 'none';
-            
-            if(user) {
-                loadUserData(user.uid);
-                loadLeaderboard();
-            }
+            if(user) loadLeaderboard(user.uid);
         });
 
-        function loadUserData(uid) {
-            // Firestore Abfrage für den aktuellen User
-            db.collection("users").doc(uid).onSnapshot(doc => {
-                if(doc.exists) {
-                    const d = doc.data();
-                    document.getElementById('welcome-name').innerText = "Hallo, " + (d.username || "Spieler");
-                    document.getElementById('my-score').innerText = d.highscore || 0;
-                }
-            });
-        }
-
-        function loadLeaderboard() {
-            const tbody = document.querySelector('#leaderboard-table tbody');
-            
-            // Firestore Abfrage: Sortiert nach highscore, absteigend (descending)
-            db.collection("users")
-              .orderBy("highscore", "desc")
-              .limit(100)
-              .onSnapshot(snap => {
+        function loadLeaderboard(uid) {
+            db.collection("users").orderBy("highscore", "desc").limit(100).onSnapshot(snap => {
+                const tbody = document.querySelector('#leaderboard-table tbody');
                 tbody.innerHTML = "";
                 let index = 1;
                 snap.forEach(doc => {
                     const p = doc.data();
-                    const row = `<tr>
-                        <td class="${index === 1 ? 'gold' : ''}">${index}</td>
+                    const isMe = doc.id === uid;
+                    if(isMe) {
+                        document.getElementById('welcome-name').innerText = "Hallo, " + (p.username || "Spieler");
+                        document.getElementById('my-score').innerText = p.highscore || 0;
+                        document.getElementById('my-rank').innerText = index;
+                    }
+                    tbody.innerHTML += `<tr style="${isMe ? 'background:rgba(0,210,255,0.2)' : ''}">
+                        <td class="${index===1?'gold':''}">${index}</td>
                         <td>${p.username || 'Anonym'}</td>
-                        <td>${p.highscore || 0}</td>
-                    </tr>`;
-                    tbody.innerHTML += row;
+                        <td>${p.highscore || 0}</td></tr>`;
                     index++;
                 });
             });
