@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PI-RUNNER | Leaderboard</title>
+    <title>PI-RUNNER | Pilot Dashboard</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
@@ -12,17 +12,16 @@
     <style>
         body { margin: 0; background: #050510; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; min-height: 100vh; }
         .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #101530 0%, #050510 100%); z-index: -1; }
-        .content { width: 100%; max-width: 450px; padding: 40px 20px; }
-        .panel { background: rgba(20, 30, 60, 0.85); backdrop-filter: blur(10px); border: 1px solid #00d2ff; border-radius: 20px; padding: 30px; box-shadow: 0 0 30px rgba(0, 210, 255, 0.2); text-align: center; }
-        h1 { color: #00d2ff; letter-spacing: 4px; text-shadow: 0 0 10px #00d2ff; margin-bottom: 20px; }
-        input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.6); border: 1px solid #304060; color: white; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 14px; margin-top: 15px; background: linear-gradient(45deg, #0051ff, #00d2ff); border: none; color: white; font-weight: bold; border-radius: 10px; cursor: pointer; font-size: 16px; text-transform: uppercase; }
-        #auth-error { color: #ff4d4d; font-size: 14px; margin-top: 15px; min-height: 20px; }
+        .content { width: 100%; max-width: 400px; padding: 40px 20px; }
+        .panel { background: rgba(20, 30, 60, 0.8); backdrop-filter: blur(10px); border: 1px solid #00d2ff; border-radius: 20px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); text-align: center; }
+        h1 { color: #00d2ff; letter-spacing: 2px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: rgba(0,0,0,0.5); border: 1px solid #304060; color: white; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; margin-top: 15px; background: linear-gradient(45deg, #0051ff, #00d2ff); border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        #auth-error { color: #ff4d4d; font-size: 14px; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { padding: 12px; border-bottom: 2px solid #00d2ff; color: #00d2ff; text-align: left; }
-        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left; }
+        th { padding: 10px; border-bottom: 2px solid #00d2ff; color: #00d2ff; }
+        td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .gold { color: #ffd700; font-weight: bold; }
-        .score-badge { background: rgba(0, 210, 255, 0.15); padding: 15px; border-radius: 12px; margin: 20px 0; border: 1px solid rgba(0, 210, 255, 0.3); }
     </style>
 </head>
 <body>
@@ -32,24 +31,31 @@
     <div class="content">
         <section id="auth-section" class="panel">
             <h1>PI-RUNNER</h1>
-            <input type="text" id="login-name" placeholder="Name">
-            <input type="password" id="login-pass" placeholder="Passwort">
-            <button onclick="login()">Anmelden</button>
+            <p class="subtitle">Willkommen zurück, Pilot.</p>
+            <div class="input-group">
+                <input type="text" id="username" placeholder="Dein Pilotennamen (Unity)">
+                <input type="password" id="password" placeholder="Sicherheitscode">
+                <button onclick="login()">INITIALISIERE LOGIN</button>
+            </div>
             <p id="auth-error"></p>
         </section>
 
         <section id="leaderboard-section" class="panel" style="display: none;">
-            <h2 id="welcome-text">---</h2>
-            <div class="score-badge">
-                Rekord: <span id="my-score" style="color:#00d2ff; font-weight:bold;">0</span>
+            <div class="user-info">
+                <h2>Pilot: <span id="welcome-name">---</span></h2>
+                <div class="score-badge">
+                    DEIN REKORD: <span id="my-score">0</span> STELLEN
+                </div>
             </div>
-            <table>
+            <hr>
+            <h3>WELTWEITE TOP 10</h3>
+            <table id="leaderboard-table">
                 <thead>
-                    <tr><th>#</th><th>NAME</th><th>SCORE</th></tr>
+                    <tr><th>#</th><th>PILOT</th><th>SCORE</th></tr>
                 </thead>
-                <tbody id="leader-body"></tbody>
+                <tbody></tbody>
             </table>
-            <button onclick="logout()" style="background:#1a2035; margin-top:20px; font-size: 12px;">ABMELDEN</button>
+            <button onclick="logout()" style="background: #1a2035; margin-top: 20px;">SYSTEM ABMELDEN</button>
         </section>
     </div>
 
@@ -69,61 +75,57 @@
         const db = firebase.database();
 
         function login() {
-            const nameInput = document.getElementById('login-name').value;
-            const pass = document.getElementById('login-pass').value;
+            const name = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
             const err = document.getElementById('auth-error');
 
-            if(!nameInput || !pass) {
-                err.innerText = "Bitte Name und Passwort eingeben.";
+            if (!name || !pass) {
+                err.innerText = "Bitte Name und Passwort eingeben!";
                 return;
             }
 
-            // EXAKT wie getippt (Groß/Klein bleibt), nur Leerzeichen am Rand weg
-            const email = nameInput.trim() + "@pi.quest";
-            
-            console.log("Versuche Login mit: " + email);
+            // In dieser Version nehmen wir den Namen exakt wie getippt
+            const email = name.trim() + "@pi.quest"; 
 
-            auth.signInWithEmailAndPassword(email, pass).catch(e => {
-                console.error("Fehler:", e.code);
-                err.innerText = "Name oder Passwort nicht korrekt.";
+            auth.signInWithEmailAndPassword(email, pass).catch((error) => {
+                console.error("Fehler:", error.code);
+                err.innerText = "Fehler: " + error.message;
             });
         }
 
         function logout() { auth.signOut(); }
 
         auth.onAuthStateChanged(user => {
-            const authUI = document.getElementById('auth-section');
+            const loginUI = document.getElementById('auth-section');
             const leaderUI = document.getElementById('leaderboard-section');
 
-            if(user) {
-                authUI.style.display = 'none';
+            if (user) {
+                loginUI.style.display = 'none';
                 leaderUI.style.display = 'block';
-
-                // Eigene Daten aus Realtime Database
+                
                 db.ref('users/' + user.uid).on('value', snap => {
-                    const d = snap.val();
-                    if(d) {
-                        document.getElementById('welcome-text').innerText = "Hallo, " + (d.username || "Spieler");
-                        document.getElementById('my-score').innerText = d.highscore || 0;
+                    const data = snap.val();
+                    if (data) {
+                        document.getElementById('welcome-name').innerText = data.username || "Pilot";
+                        document.getElementById('my-score').innerText = data.highscore || 0;
                     }
                 });
 
-                // Bestenliste laden
+                const tbody = document.querySelector('#leaderboard-table tbody');
                 db.ref('users').orderByChild('highscore').limitToLast(10).on('value', snap => {
-                    const tbody = document.getElementById('leader-body');
                     tbody.innerHTML = "";
                     let players = [];
-                    snap.forEach(c => { players.push(c.val()); });
+                    snap.forEach(child => { players.push(child.val()); });
                     players.reverse().forEach((p, i) => {
                         tbody.innerHTML += `<tr>
-                            <td class="${i===0?'gold':''}">${i+1}</td>
-                            <td>${p.username || 'Unbekannt'}</td>
+                            <td class="${i === 0 ? 'gold' : ''}">${i + 1}</td>
+                            <td>${p.username}</td>
                             <td>${p.highscore || 0}</td>
                         </tr>`;
                     });
                 });
             } else {
-                authUI.style.display = 'block';
+                loginUI.style.display = 'block';
                 leaderUI.style.display = 'none';
             }
         });
