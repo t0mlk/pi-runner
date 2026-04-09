@@ -3,25 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PI-RUNNER | Pilot Dashboard</title>
+    <title>PI-RUNNER | Dashboard</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
 
     <style>
-        body { margin: 0; background: #050510; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; min-height: 100vh; }
+        body { margin: 0; background: #050510; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
         .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #101530 0%, #050510 100%); z-index: -1; }
-        .content { width: 100%; max-width: 400px; padding: 40px 20px; }
-        .panel { background: rgba(20, 30, 60, 0.8); backdrop-filter: blur(10px); border: 1px solid #00d2ff; border-radius: 20px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); text-align: center; }
-        h1 { color: #00d2ff; letter-spacing: 2px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; background: rgba(0,0,0,0.5); border: 1px solid #304060; color: white; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; margin-top: 15px; background: linear-gradient(45deg, #0051ff, #00d2ff); border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; }
-        #auth-error { color: #ff4d4d; font-size: 14px; margin-top: 15px; }
+        .content { width: 100%; max-width: 450px; padding: 40px 20px; }
+        .panel { background: rgba(20, 30, 60, 0.85); backdrop-filter: blur(10px); border: 1px solid #00d2ff; border-radius: 20px; padding: 30px; box-shadow: 0 0 30px rgba(0, 210, 255, 0.2); text-align: center; }
+        h1 { color: #00d2ff; letter-spacing: 4px; text-shadow: 0 0 10px #00d2ff; margin-bottom: 5px; }
+        .subtitle { font-size: 12px; color: #80a0c0; text-transform: uppercase; margin-bottom: 25px; }
+        input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.6); border: 1px solid #304060; color: white; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        input:focus { border-color: #00d2ff; outline: none; box-shadow: 0 0 8px #00d2ff; }
+        button { width: 100%; padding: 14px; margin-top: 15px; background: linear-gradient(45deg, #0051ff, #00d2ff); border: none; color: white; font-weight: bold; border-radius: 10px; cursor: pointer; transition: transform 0.2s; font-size: 16px; }
+        button:hover { transform: scale(1.02); box-shadow: 0 0 15px #00d2ff; }
+        #auth-error { color: #ff4d4d; font-size: 14px; margin-top: 15px; min-height: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { padding: 10px; border-bottom: 2px solid #00d2ff; color: #00d2ff; }
-        td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .gold { color: #ffd700; font-weight: bold; }
+        th { padding: 12px; border-bottom: 2px solid #00d2ff; color: #00d2ff; font-size: 14px; }
+        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 15px; }
+        .gold { color: #ffd700; font-weight: bold; text-shadow: 0 0 5px #ffd700; }
+        .score-badge { background: rgba(0, 210, 255, 0.15); padding: 15px; border-radius: 12px; margin: 20px 0; border: 1px solid rgba(0, 210, 255, 0.3); }
+        .logout-btn { background: #1a2035; border: 1px solid #304060; margin-top: 25px; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -31,45 +36,44 @@
     <div class="content">
         <section id="auth-section" class="panel">
             <h1>PI-RUNNER</h1>
-            <p class="subtitle">Willkommen zurück, Pilot.</p>
-            <div class="input-group">
-                <input type="text" id="username" placeholder="Dein Pilotennamen (Unity)">
-                <input type="password" id="password" placeholder="Sicherheitscode">
-                <button onclick="login()">INITIALISIERE LOGIN</button>
-            </div>
+            <p class="subtitle">Zentralrechner Login</p>
+            <input type="text" id="username" placeholder="Pilotennamen">
+            <input type="password" id="password" placeholder="Sicherheitscode">
+            <button onclick="login()">LOGIN STARTEN</button>
             <p id="auth-error"></p>
         </section>
 
         <section id="leaderboard-section" class="panel" style="display: none;">
-            <div class="user-info">
-                <h2>Pilot: <span id="welcome-name">---</span></h2>
-                <div class="score-badge">
-                    DEIN REKORD: <span id="my-score">0</span> STELLEN
-                </div>
+            <h2 id="welcome-name">---</h2>
+            <div class="score-badge">
+                Persönlicher Rekord: <span id="my-score" style="color: #00d2ff; font-weight: bold;">0</span>
             </div>
-            <hr>
-            <h3>WELTWEITE TOP 10</h3>
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
+            <h3>TOP 10 PILOTEN</h3>
             <table id="leaderboard-table">
                 <thead>
-                    <tr><th>#</th><th>PILOT</th><th>SCORE</th></tr>
+                    <tr><th>RANK</th><th>PILOT</th><th>STELLEN</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
-            <button onclick="logout()" style="background: #1a2035; margin-top: 20px;">SYSTEM ABMELDEN</button>
+            <button onclick="logout()" class="logout-btn">ABMELDEN</button>
         </section>
     </div>
 
     <script>
+        // Deine Konfiguration (Exakt korrigiert)
         const firebaseConfig = {
-            apiKey: "AIzaSyA0Et1D50vP8KnaRC1nyNN5dN0OGqpqq7c",
+            apiKey: "AIzaSyA0Et1D50vP8KnaRC1nyNN5dNO0Gqpqq7c",
             authDomain: "lpmzt-5c267.firebaseapp.com",
             databaseURL: "https://lpmzt-5c267-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "lpmzt-5c267",
             storageBucket: "lpmzt-5c267.firebasestorage.app",
             messagingSenderId: "378438452791",
-            appId: "1:378438452791:web:33bec3f294a63aa41361b2"
+            appId: "1:378438452791:web:33bec3f294a63aa41361b2",
+            measurementId: "G-M2QSLJ32X1"
         };
 
+        // Firebase Initialisierung
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
@@ -79,56 +83,66 @@
             const pass = document.getElementById('password').value;
             const err = document.getElementById('auth-error');
 
-            if (!name || !pass) {
-                err.innerText = "Bitte Name und Passwort eingeben!";
+            if(!name || !pass) {
+                err.innerText = "Bitte Login-Daten eingeben.";
                 return;
             }
 
-            // In dieser Version nehmen wir den Namen exakt wie getippt
-            const email = name.trim() + "@pi.quest"; 
+            // HINWEIS: Prüfe, welche Endung du in Unity nutzt!
+            const email = name.trim().toLowerCase() + "@pi.quest";
 
-            auth.signInWithEmailAndPassword(email, pass).catch((error) => {
-                console.error("Fehler:", error.code);
-                err.innerText = "Fehler: " + error.message;
+            auth.signInWithEmailAndPassword(email, pass).catch(e => {
+                console.error(e);
+                if(e.code === "auth/invalid-login-credentials") {
+                    err.innerText = "Name oder Passwort falsch.";
+                } else {
+                    err.innerText = "Fehler: " + e.message;
+                }
             });
         }
 
         function logout() { auth.signOut(); }
 
+        // Überwacht Login-Status
         auth.onAuthStateChanged(user => {
-            const loginUI = document.getElementById('auth-section');
-            const leaderUI = document.getElementById('leaderboard-section');
-
-            if (user) {
-                loginUI.style.display = 'none';
-                leaderUI.style.display = 'block';
-                
-                db.ref('users/' + user.uid).on('value', snap => {
-                    const data = snap.val();
-                    if (data) {
-                        document.getElementById('welcome-name').innerText = data.username || "Pilot";
-                        document.getElementById('my-score').innerText = data.highscore || 0;
-                    }
-                });
-
-                const tbody = document.querySelector('#leaderboard-table tbody');
-                db.ref('users').orderByChild('highscore').limitToLast(10).on('value', snap => {
-                    tbody.innerHTML = "";
-                    let players = [];
-                    snap.forEach(child => { players.push(child.val()); });
-                    players.reverse().forEach((p, i) => {
-                        tbody.innerHTML += `<tr>
-                            <td class="${i === 0 ? 'gold' : ''}">${i + 1}</td>
-                            <td>${p.username}</td>
-                            <td>${p.highscore || 0}</td>
-                        </tr>`;
-                    });
-                });
-            } else {
-                loginUI.style.display = 'block';
-                leaderUI.style.display = 'none';
+            document.getElementById('auth-section').style.display = user ? 'none' : 'block';
+            document.getElementById('leaderboard-section').style.display = user ? 'block' : 'none';
+            
+            if(user) {
+                loadUserData(user.uid);
+                loadLeaderboard();
             }
         });
+
+        function loadUserData(uid) {
+            db.ref('users/' + uid).on('value', snap => {
+                const d = snap.val();
+                if(d) {
+                    document.getElementById('welcome-name').innerText = "Pilot: " + (d.username || "Unbekannt");
+                    document.getElementById('my-score').innerText = d.highscore || 0;
+                }
+            });
+        }
+
+        function loadLeaderboard() {
+            const tbody = document.querySelector('#leaderboard-table tbody');
+            db.ref('users').orderByChild('highscore').limitToLast(10).on('value', snap => {
+                tbody.innerHTML = "";
+                let players = [];
+                snap.forEach(child => {
+                    players.push(child.val());
+                });
+                
+                players.reverse().forEach((p, i) => {
+                    const row = `<tr>
+                        <td class="${i === 0 ? 'gold' : ''}">${i + 1}</td>
+                        <td>${p.username || 'Anonym'}</td>
+                        <td>${p.highscore || 0}</td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
+            });
+        }
     </script>
 </body>
 </html>
