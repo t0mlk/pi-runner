@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PI-RUNNER | Leaderboard</title>
+    <title>PI-RUNNER | Dashboard</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
@@ -14,18 +14,14 @@
         .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #101530 0%, #050510 100%); z-index: -1; }
         .content { width: 100%; max-width: 450px; padding: 40px 20px; }
         .panel { background: rgba(20, 30, 60, 0.85); backdrop-filter: blur(10px); border: 1px solid #00d2ff; border-radius: 20px; padding: 30px; box-shadow: 0 0 30px rgba(0, 210, 255, 0.2); text-align: center; }
-        h1 { color: #00d2ff; letter-spacing: 4px; text-shadow: 0 0 10px #00d2ff; margin-top: 0; }
-        .subtitle { font-size: 12px; color: #80a0c0; text-transform: uppercase; margin-bottom: 20px; }
+        h1 { color: #00d2ff; letter-spacing: 4px; text-shadow: 0 0 10px #00d2ff; margin: 0 0 20px 0; }
         input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.6); border: 1px solid #304060; color: white; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
-        input:focus { border-color: #00d2ff; outline: none; }
         button { width: 100%; padding: 14px; margin-top: 15px; background: linear-gradient(45deg, #0051ff, #00d2ff); border: none; color: white; font-weight: bold; border-radius: 10px; cursor: pointer; font-size: 16px; text-transform: uppercase; }
-        #auth-error { color: #ff4d4d; font-size: 14px; margin-top: 15px; min-height: 20px; }
+        #auth-error { color: #ff4d4d; font-size: 14px; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { padding: 12px; border-bottom: 2px solid #00d2ff; color: #00d2ff; text-align: left; font-size: 14px; }
-        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left; font-size: 15px; }
+        th { padding: 12px; border-bottom: 2px solid #00d2ff; color: #00d2ff; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left; }
         .gold { color: #ffd700; font-weight: bold; }
-        .score-badge { background: rgba(0, 210, 255, 0.15); padding: 15px; border-radius: 12px; margin: 20px 0; border: 1px solid rgba(0, 210, 255, 0.3); }
-        .logout-btn { background: #1a2035; border: 1px solid #304060; margin-top: 25px; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -35,7 +31,6 @@
     <div class="content">
         <section id="auth-section" class="panel">
             <h1>PI-RUNNER</h1>
-            <p class="subtitle">Anmeldung</p>
             <input type="text" id="login-name" placeholder="Name">
             <input type="password" id="login-pass" placeholder="Passwort">
             <button onclick="login()">Anmelden</button>
@@ -43,24 +38,20 @@
         </section>
 
         <section id="leaderboard-section" class="panel" style="display: none;">
-            <h2 id="welcome-text">Lädt...</h2>
-            <div class="score-badge">
-                Persönlicher Rekord: <span id="my-score" style="color: #00d2ff; font-weight: bold;">0</span>
+            <h2 id="welcome-text">---</h2>
+            <div style="background: rgba(0,210,255,0.1); padding: 15px; border-radius: 10px; margin: 20px 0;">
+                Rekord: <span id="my-score" style="color:#00d2ff; font-weight:bold;">0</span>
             </div>
-            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
-            <h3>TOP 10 BESTENLISTE</h3>
+            <h3>BESTENLISTE</h3>
             <table>
-                <thead>
-                    <tr><th>RANG</th><th>NAME</th><th>STELLEN</th></tr>
-                </thead>
+                <thead><tr><th>#</th><th>NAME</th><th>SCORE</th></tr></thead>
                 <tbody id="leader-body"></tbody>
             </table>
-            <button onclick="logout()" class="logout-btn">ABMELDEN</button>
+            <button onclick="logout()" style="background:#1a2035; margin-top:20px;">ABMELDEN</button>
         </section>
     </div>
 
     <script>
-        // Deine Konfig (API-Key mit Null korrigiert)
         const firebaseConfig = {
             apiKey: "AIzaSyA0Et1D50vP8KnaRC1nyNN5dN0OGqpqq7c",
             authDomain: "lpmzt-5c267.firebaseapp.com",
@@ -68,80 +59,54 @@
             projectId: "lpmzt-5c267",
             storageBucket: "lpmzt-5c267.firebasestorage.app",
             messagingSenderId: "378438452791",
-            appId: "1:378438452791:web:33bec3f294a63aa41361b2",
-            measurementId: "G-M2QSLJ32X1"
+            appId: "1:378438452791:web:33bec3f294a63aa41361b2"
         };
 
-        // Firebase Starten
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
 
         function login() {
-            const nameValue = document.getElementById('login-name').value;
-            const passValue = document.getElementById('login-pass').value;
-            const errField = document.getElementById('auth-error');
+            const name = document.getElementById('login-name').value.trim();
+            const pass = document.getElementById('login-pass').value;
+            const err = document.getElementById('auth-error');
 
-            if(!nameValue || !passValue) {
-                errField.innerText = "Bitte Name und Passwort eingeben.";
-                return;
-            }
+            // WICHTIG: Wir bauen die E-Mail zusammen
+            const email = name + "@pi.quest";
+            
+            // Das hier hilft uns beim Suchen: Drücke F12 im Browser, um das zu sehen!
+            console.log("Versuche Login mit: " + email);
 
-            // Nutzt deine @pi.quest Endung
-            // .trim() entfernt versehentliche Leerzeichen am Ende
-            const email = nameValue.trim() + "@pi.quest";
-
-            auth.signInWithEmailAndPassword(email, passValue).catch(error => {
-                console.error("Login Error:", error.code);
-                errField.innerText = "Name oder Passwort nicht korrekt.";
+            auth.signInWithEmailAndPassword(email, pass).catch(e => {
+                console.error("Firebase Fehlercode:", e.code);
+                err.innerText = "Name oder Passwort nicht korrekt.";
             });
         }
 
-        function logout() {
-            auth.signOut();
-        }
+        function logout() { auth.signOut(); }
 
-        // Automatische Umschaltung bei Login/Logout
         auth.onAuthStateChanged(user => {
-            const authUI = document.getElementById('auth-section');
-            const leaderUI = document.getElementById('leaderboard-section');
-
-            if (user) {
-                authUI.style.display = 'none';
-                leaderUI.style.display = 'block';
-                
-                // 1. Eigene Daten laden
+            document.getElementById('auth-section').style.display = user ? 'none' : 'block';
+            document.getElementById('leaderboard-section').style.display = user ? 'block' : 'none';
+            if(user) {
                 db.ref('users/' + user.uid).on('value', snap => {
-                    const data = snap.val();
-                    if(data) {
-                        document.getElementById('welcome-text').innerText = "Hallo, " + (data.username || "Spieler");
-                        document.getElementById('my-score').innerText = data.highscore || 0;
+                    const d = snap.val();
+                    if(d) {
+                        document.getElementById('welcome-text').innerText = "Hallo, " + (d.username || "Spieler");
+                        document.getElementById('my-score').innerText = d.highscore || 0;
                     }
                 });
-
-                // 2. Bestenliste laden
-                const tbody = document.getElementById('leader-body');
                 db.ref('users').orderByChild('highscore').limitToLast(10).on('value', snap => {
+                    const tbody = document.getElementById('leader-body');
                     tbody.innerHTML = "";
                     let players = [];
-                    snap.forEach(child => {
-                        players.push(child.val());
-                    });
+                    snap.forEach(c => { players.push(c.val()); });
                     players.reverse().forEach((p, i) => {
-                        const row = `<tr>
-                            <td class="${i === 0 ? 'gold' : ''}">${i + 1}</td>
-                            <td>${p.username || 'Anonym'}</td>
-                            <td>${p.highscore || 0}</td>
-                        </tr>`;
-                        tbody.innerHTML += row;
+                        tbody.innerHTML += `<tr><td class="${i===0?'gold':''}">${i+1}</td><td>${p.username}</td><td>${p.highscore}</td></tr>`;
                     });
                 });
-
-            } else {
-                authUI.style.display = 'block';
-                leaderUI.style.display = 'none';
             }
         });
     </script>
-</body> 
+</body>
 </html>
