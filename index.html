@@ -3,52 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PI-RUNNER | Dashboard</title>
+    <title>PI-RUNNER | Terminal</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <style>
-        body { margin: 0; background: #050510; color: white; font-family: sans-serif; display: flex; justify-content: center; min-height: 100vh; }
-        .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #101530 0%, #050510 100%); z-index: -1; }
-        .content { width: 100%; max-width: 450px; padding: 40px 20px; }
-        .panel { background: rgba(20, 30, 60, 0.85); backdrop-filter: blur(10px); border: 1px solid #00d2ff; border-radius: 20px; padding: 30px; text-align: center; }
-        h1 { color: #00d2ff; letter-spacing: 4px; margin-bottom: 20px; }
-        input { width: 100%; padding: 14px; margin: 10px 0; background: rgba(0,0,0,0.6); border: 1px solid #304060; color: white; border-radius: 10px; }
-        button { width: 100%; padding: 14px; background: linear-gradient(45deg, #0051ff, #00d2ff); border: none; color: white; font-weight: bold; border-radius: 10px; cursor: pointer; margin-top: 10px; }
-        #leaderboard-container { max-height: 350px; overflow-y: auto; margin-top: 20px; background: rgba(0, 0, 0, 0.2); border-radius: 10px; }
+        :root {
+            --primary: #00d2ff;
+            --secondary: #0051ff;
+            --bg-dark: #020205;
+            --panel-bg: rgba(10, 15, 30, 0.7);
+            --accent: #ff00c1;
+        }
+
+        body { 
+            margin: 0; 
+            background: var(--bg-dark); 
+            color: white; 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animierter Background */
+        .background-wrap {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #0a1931 0%, #020205 100%);
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: moveStars linear infinite;
+        }
+
+        @keyframes moveStars {
+            from { transform: translateY(0); }
+            to { transform: translateY(-1000px); }
+        }
+
+        /* Content Styling */
+        .content { 
+            width: 100%; 
+            max-width: 500px; 
+            padding: 40px 20px; 
+            z-index: 1;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .panel { 
+            background: var(--panel-bg); 
+            backdrop-filter: blur(15px); 
+            border: 1px solid rgba(0, 210, 255, 0.3); 
+            border-radius: 24px; 
+            padding: 40px; 
+            text-align: center; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 20px rgba(0, 210, 255, 0.05);
+        }
+
+        h1 { 
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--primary); 
+            letter-spacing: 8px; 
+            margin-bottom: 30px; 
+            text-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
+            text-transform: uppercase;
+        }
+
+        /* Input Styling */
+        .input-group { position: relative; margin-bottom: 15px; }
+
+        input { 
+            width: 100%; 
+            padding: 16px; 
+            box-sizing: border-box;
+            background: rgba(0,0,0,0.4); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            color: white; 
+            border-radius: 12px; 
+            transition: all 0.3s;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        input:focus { 
+            border-color: var(--primary); 
+            background: rgba(0,0,0,0.6);
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+        }
+
+        /* Button Styling */
+        button { 
+            width: 100%; 
+            padding: 16px; 
+            background: linear-gradient(45deg, var(--secondary), var(--primary)); 
+            border: none; 
+            color: white; 
+            font-weight: 800; 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-radius: 12px; 
+            cursor: pointer; 
+            margin-top: 20px; 
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 210, 255, 0.4);
+        }
+
+        button:active { transform: translateY(0); }
+
+        /* Leaderboard Modernization */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stat-label { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { font-size: 1.4rem; font-weight: bold; color: var(--primary); display: block; }
+
+        #leaderboard-container { 
+            max-height: 400px; 
+            overflow-y: auto; 
+            background: rgba(0, 0, 0, 0.3); 
+            border-radius: 15px; 
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Custom Scrollbar */
+        #leaderboard-container::-webkit-scrollbar { width: 6px; }
+        #leaderboard-container::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+
         table { width: 100%; border-collapse: collapse; }
-        th { padding: 10px; border-bottom: 2px solid #00d2ff; color: #00d2ff; }
-        td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .gold { color: #ffd700; font-weight: bold; }
-        .score-badge { background: rgba(0, 210, 255, 0.1); padding: 15px; border-radius: 12px; margin: 15px 0; border: 1px solid #00d2ff; }
+        th { 
+            position: sticky; top: 0; background: #0f172a;
+            padding: 15px; font-size: 0.8rem; color: var(--primary); text-transform: uppercase;
+        }
+        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem; }
+
+        .gold { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); font-weight: bold; }
+        tr:hover { background: rgba(255,255,255,0.03); }
+
+        #auth-error { font-size: 0.85rem; margin-top: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="stars"></div>
+    <div class="background-wrap" id="star-field"></div>
+    
     <div class="content">
         <section id="auth-section" class="panel">
             <h1>PI-RUNNER</h1>
-            <input type="text" id="username" placeholder="Name">
-            <input type="password" id="password" placeholder="Passwort">
-            <button onclick="login()">ANMELDEN</button>
-            <p id="auth-error" style="color: red;"></p>
+            <div class="input-group">
+                <input type="text" id="username" placeholder="Pilot Name">
+            </div>
+            <div class="input-group">
+                <input type="password" id="password" placeholder="Zugriffscode">
+            </div>
+            <button onclick="login()">INITIALISIEREN</button>
+            <p id="auth-error" style="color: #ff4b2b;"></p>
         </section>
 
         <section id="leaderboard-section" class="panel" style="display: none;">
-            <h2 id="welcome-name">---</h2>
-            <div class="score-badge">Rekord: <span id="my-score">0</span> | Rang: <span id="my-rank">?</span></div>
-            <h3>TOP 100</h3>
+            <h2 id="welcome-name" style="margin-top:0; color: white;">---</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-label">Dein Rekord</span>
+                    <span class="stat-value" id="my-score">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Globaler Rang</span>
+                    <span class="stat-value" id="my-rank">?</span>
+                </div>
+            </div>
+
+            <h3 style="text-align: left; font-size: 0.9rem; letter-spacing: 2px; color: var(--primary);">HALL OF FAME</h3>
             <div id="leaderboard-container">
                 <table id="leaderboard-table">
-                    <thead><tr><th>#</th><th>NAME</th><th>PUNKTE</th></tr></thead>
+                    <thead><tr><th>#</th><th>PLAYER</th><th>SCORE</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
-            <button onclick="auth.signOut()" style="background: #1a2035; margin-top: 20px;">ABMELDEN</button>
+            
+            <button onclick="auth.signOut()" style="background: transparent; border: 1px solid #333; color: #666; font-size: 0.7rem; margin-top: 30px;">SYSTEM ABMELDEN</button>
         </section>
     </div>
 
     <script>
+        // Star Background Generator
+        const starField = document.getElementById('star-field');
+        for (let i = 0; i < 150; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 3;
+            star.style.width = size + 'px';
+            star.style.height = size + 'px';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDuration = (Math.random() * 50 + 50) + 's';
+            starField.appendChild(star);
+        }
+
+        // Firebase Konfiguration (Unverändert)
         const firebaseConfig = {
             apiKey: "AIzaSyA0Et1D50vP8KnaRC1nyNN5dNO0Gqpqq7c",
             authDomain: "lpmzt-5c267.firebaseapp.com",
@@ -62,9 +242,12 @@
         const db = firebase.firestore();
 
         function login() {
+            const btn = document.querySelector('#auth-section button');
+            btn.innerText = "VERBINDET...";
             const email = document.getElementById('username').value.trim().toLowerCase() + "@pi.quest";
             auth.signInWithEmailAndPassword(email, document.getElementById('password').value).catch(e => {
-                document.getElementById('auth-error').innerText = "Fehler!";
+                document.getElementById('auth-error').innerText = "ZUGRIFF VERWEIGERT!";
+                btn.innerText = "INITIALISIEREN";
             });
         }
 
@@ -83,14 +266,14 @@
                     const p = doc.data();
                     const isMe = doc.id === uid;
                     if(isMe) {
-                        document.getElementById('welcome-name').innerText = "Hallo, " + (p.username || "Spieler");
+                        document.getElementById('welcome-name').innerText = (p.username || "Spieler").toUpperCase();
                         document.getElementById('my-score').innerText = p.highscore || 0;
-                        document.getElementById('my-rank').innerText = index;
+                        document.getElementById('my-rank').innerText = "#" + index;
                     }
-                    tbody.innerHTML += `<tr style="${isMe ? 'background:rgba(0,210,255,0.2)' : ''}">
-                        <td class="${index===1?'gold':''}">${index}</td>
-                        <td>${p.username || 'Anonym'}</td>
-                        <td>${p.highscore || 0}</td></tr>`;
+                    tbody.innerHTML += `<tr style="${isMe ? 'background:rgba(0,210,255,0.15); box-shadow: inset 4px 0 0 var(--primary);' : ''}">
+                        <td class="${index<=3?'gold':''}">${index}</td>
+                        <td style="font-weight: ${isMe?'bold':'normal'}">${p.username || 'Anonym'}</td>
+                        <td style="color: var(--primary); font-family: monospace; font-size: 1.1rem;">${(p.highscore || 0).toLocaleString()}</td></tr>`;
                     index++;
                 });
             });
