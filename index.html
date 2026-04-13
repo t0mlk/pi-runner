@@ -23,14 +23,13 @@
             display: flex;
             justify-content: center;
             min-height: 100vh;
+            
 
-            /*  overflow: hidden; */                 /*===== Verhindert Scrollen des Bodys =====*/
-
-            overflow-y: auto;  /* SCROLL AN */
+            overflow-y: auto; 
             overflow-x: hidden;
         }
 
-        /* Maximale Sternen-Animation */
+       
         .stars-wrapper {
             position: fixed;
             top: 0;
@@ -60,7 +59,7 @@
             }
         }
 
-        /* Content & Panel */
+      
         .content {
             width: 100%;
             max-width: 450px;
@@ -127,7 +126,7 @@
             transform: scale(1.02);
         }
 
-        /* Leaderboard-Verschönerung */
+    
         .score-badge-container {
             display: flex;
             justify-content: space-around;
@@ -472,7 +471,7 @@
 
             const myIndex = allPlayers.findIndex(p => p.id === uid);
 
-            // Wenn nicht gefunden oder #1 → kein Gap
+            // Wenn nicht gefunden oder #1 kein Gap
             if (myIndex <= 0) {
                 document.getElementById("gap-info").innerText =
                     "Du bist auf Platz 1!";
@@ -517,21 +516,14 @@
             for (let i = 0; i < count; i++) {
                 const star = document.createElement('div');
                 star.className = 'star';
-
-                // Zufällige Größe (einige winzig, einige größer)
                 const size = Math.random() * 3 + 'px';
                 star.style.width = size;
                 star.style.height = size;
-
-                // Zufällige Position
                 star.style.left = Math.random() * 100 + '%';
                 star.style.top = Math.random() * 100 + '%';
-
-                // Zufällige Animationsdauer für Parallax-Effekt
                 const duration = (Math.random() * 50 + 20) + 's';
                 star.style.animationDuration = duration;
                 star.style.animationDelay = '-' + (Math.random() * 50) + 's';
-
                 field.appendChild(star);
             }
 
@@ -540,7 +532,7 @@
 
         createStars();
 
-        // Firebase Logic (Unverändert)
+        // Firebase Logic (Max)
         const firebaseConfig = {
             apiKey: "AIzaSyA0Et1D50vP8KnaRC1nyNN5dNO0Gqpqq7c",
             authDomain: "lpmzt-5c267.firebaseapp.com",
@@ -560,7 +552,6 @@
             });
         }
 
-        // Animiert Zahlen (z.B. Score) von Startwert zu Endwert
         function animateValue(element, start, end, duration = 800) {
             let startTime = null;
 
@@ -574,7 +565,7 @@
             requestAnimationFrame(step);
         }
 
-        // Live Updates ohne Reload
+        // Live Updates 
         let lastScores = {};
 
         
@@ -590,7 +581,7 @@
 
         let currentSort = "highscore";
 
-        // Sortiert Spieler nach Score (absteigend)
+        // Sortiert Spieler nach Score
         function sortByScore(players) {
             return players.sort((a, b) => b.score - a.score);
         }
@@ -602,11 +593,9 @@
             if (user) loadLeaderboard(user.uid);
         });
 
-
-        // Tabelle auslagern
         let allPlayers = [];
 
-        // Rendert die Leaderboard-Tabelle (ab Platz 4)
+        //Leaderboard (ab Platz 4)
         function renderTable(players) {
             const tbody = document.querySelector('#leaderboard-table tbody');
             tbody.innerHTML = "";
@@ -644,7 +633,7 @@
         }
 
 
-        // Live Suche Funktion
+        // Live Such Funktion
         function filterPlayers() {
             const value = document.getElementById("search-input").value.toLowerCase().trim();
 
@@ -660,7 +649,6 @@
             renderTable(filtered);
         }
 
-        // Lädt Live-Daten aus Firestore und baut das komplette Leaderboard
         function loadLeaderboard(uid) {
             db.collection("users").orderBy("highscore", "desc").limit(100).onSnapshot(snap => {
 
@@ -686,19 +674,16 @@
 
                 const top3 = players.slice(0, 3);
 
-                // 👉 Tabelle ab Platz 4
                 players.forEach((p, i) => {
                     const rank = i + 1;
                     const isMe = p.id === uid;
 
-                    // 👉 Eigene Stats IMMER setzen
                     if (isMe) {
                         document.getElementById('welcome-name').innerText = "Hallo, " + p.name;
                         document.getElementById('my-score').innerText = p.score;
                         document.getElementById('my-rank').innerText = rank;
                     }
 
-                    // 👉 Tabelle erst ab Platz 4 anzeigen
                     if (rank > 3) {
                         tbody.innerHTML += `
                 <tr id="row-${p.id}" class="${isMe ? 'my-row' : ''}">
@@ -708,8 +693,7 @@
             </tr>`;
                     }
                 });
-                // neu=========================================================================
-                // podium
+
                 document.getElementById("p1-name").innerText = top3[0]?.name || "---";
                 document.getElementById("p2-name").innerText = top3[1]?.name || "---";
                 document.getElementById("p3-name").innerText = top3[2]?.name || "---";
@@ -717,7 +701,6 @@
                 animateValue(document.getElementById("p1-score"), 0, top3[0]?.score || 0);
                 animateValue(document.getElementById("p2-score"), 0, top3[1]?.score || 0);
                 animateValue(document.getElementById("p3-score"), 0, top3[2]?.score || 0);
-                // neu=========================================================================
             });
         }
 
